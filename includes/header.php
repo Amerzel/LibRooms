@@ -50,9 +50,9 @@ if(is_array($_SESSION['LibRooms']['Roles']))
 	{
 		print("<center><form action='search.php'>\n");
 		print("<table id='admin_toolbar' style='border:1px solid #444;'><tr>\n");
-		
+
 		print("<td>Search:<input id='search' size='18' type='text' name='search'><input type='submit' value='Go'></td>\n");
-		
+
 		//print("<td align='center' style='border-right:1px dotted #FFF;'><a href='quick_res.php'>QuickRes</a></td>\n");
 		print("<td align='center' style='border-right:1px dotted #FFF;'><a href='manage_reservations.php'>Reservations</a></td>\n");
 		print("<td align='center' style='border-right:1px dotted #FFF;'><a href='manage_rooms.php'>Rooms</a></td>\n");
@@ -80,6 +80,7 @@ if(!strcmp($page,'reservation_calendar.php'))
 }
 
 print("<link rel='stylesheet' type='text/css' href='".WEB_ROOT."css/base.css' media='all'>\n");
+print("<link rel='stylesheet' type='text/css' href='".WEB_ROOT."css/calendar.css' media='all'>\n");
 
 ?>
 

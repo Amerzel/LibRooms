@@ -12,9 +12,9 @@ require_once("includes/email_communication.php");
 function load_reservations($options=array())
 {
 	global $db;
-	
+
 	$reservations = array();
-	
+
 	if(isset($options['group_by']))
 	{
 		if(!strcmp($options['group_by'],'status'))
@@ -25,15 +25,15 @@ function load_reservations($options=array())
 			$reservations["Cancelled"] = array();
 		}
 	}
-	
+
 	$where = "WHERE 1";
-	
+
 	if(isset($options['id']))
 		$where .= " AND `id` like '".$options['id']."'";
-	
+
 	if(isset($options['user_id']))
 		$where .= " AND `user_id` like '".$options['user_id']."'";
-	
+
 	if(isset($options['status']))
 	{
 		if(is_array($options['status']))
@@ -45,49 +45,49 @@ function load_reservations($options=array())
 		else
 			$where .= " AND `status` like '".$options['status']."'";
 	}
-	
+
 	if(isset($options['overdue']) && !strcmp($options['overdue'],'1'))
 	{
 		$where .= " AND `status` like 'Checked Out' AND `sched_end_time` < '".date('Y-m-d H:i:s')."'";
 	}
-		
+
 	if(isset($options['date']))
 		$where .= " AND `date` like '".$options['date']."'";
-	
+
 	if(isset($options['sched_start_time']))
 		$where .= " AND `sched_start_time` >= '".$options['sched_start_time']."'";
-	
+
 	if(isset($options['sched_end_time']))
 		$where .= " AND `sched_end_time` < '".$options['sched_end_time']."'";
-		
+
 	if(isset($options['sched_end_time gte']))
 		$where .= " AND `sched_end_time` >= '".$options['sched_end_time gte']."'";
-	
-		
+
+
 	if(isset($options['room_id']))
 		$where .= " AND `room_id` like '".$options['room_id']."'";
-		
+
 	if(isset($options['room_section']))
 		$where .= " AND `room_section` like '".$options['room_section']."'";
-		
+
 	if(isset($options['active']))
 		$where .= " AND `active` like '".$options['active']."'";
 	else
 		$where .= " AND `active` like '1'";
-	
-	
+
+
 	if(isset($options['sort asc']))
 		$sort = "ORDER BY ".$options['sort asc'];
 	else if(isset($options['sort desc']))
 		$sort = "ORDER BY ".$options['sort desc']." DESC";
 	else
 		$sort = "ORDER BY sched_start_time";
-		
+
 	if(isset($options['limit']))
 		$limit = "LIMIT ".$options['limit'];
 	else
 		$limit = "";
-		
+
 	$select = "select * from reservations $where $sort $limit";
 	//print("select: $select<br>\n");
 	$res = $db->query($select);
@@ -98,7 +98,7 @@ function load_reservations($options=array())
 		$res_room = $db->query($select);
 		while($res_room->fetchInto($room))
 			$reservation->room = $room;
-			
+
 		if(isset($options['group_by']))
 		{
 			if(!strcmp($options['group_by'],'status'))
@@ -121,31 +121,31 @@ function load_reservations($options=array())
 function load_reservations_for_user($user_id,$options=array())
 {
 	global $db;
-	
+
 	$reservations = array();
-	
+
 	$where = "WHERE user_id like '$user_id'";
-	
+
 	if(isset($options['id']))
 		$where .= " AND `id` like '".$options['id']."'";
-	
+
 	if(isset($options['user_id']))
 		$where .= " AND `user_id` like '".$options['user_id']."'";
-	
+
 	if(isset($options['status']))
 		$where .= " AND `status` like '".$options['status']."'";
-		
+
 	if(isset($options['active']))
 		$where .= " AND `active` like '".$options['active']."'";
-	
-	
+
+
 	if(isset($options['sort asc']))
 		$sort = "ORDER BY ".$options['sort asc'];
 	else if(isset($options['sort desc']))
 		$sort = "ORDER BY ".$options['sort desc'];
 	else
 		$sort = "ORDER BY sched_start_time";
-		
+
 	$select = "select * from reservations $where $sort";
 	//print("select: $select<br>\n");
 	$res = $db->query($select);
@@ -162,14 +162,14 @@ function load_reservations_for_user($user_id,$options=array())
 			$status = $reservation->status;
 		$reservations[$status][] = $reservation;
 	}
-	
+
 	return($reservations);
 }
 
 function load_reservation_details($id)
 {
 	global $db;
-	
+
 	$reservations = array();
 	$select = "select * from reservations WHERE id like '$id'";
 	//print("select: $select<br>\n");
@@ -186,7 +186,7 @@ function load_reservation_details($id)
 			$status = "Completed";
 		else
 			$status = $reservation->status;
-			
+
 		// get status history
 		$select = "SELECT * FROM status_history where reservation_id like '$id' and active like '1' order by date";
 		// print("select: $select<br>\n");
@@ -194,8 +194,8 @@ function load_reservation_details($id)
 		$reservation->status_history = array();
 		while($status_res->fetchInto($status))
 			$reservation->status_history[] = $status;
-			
-				
+
+
 		// get fines
 		$select = "SELECT * FROM fines where reservation_id like '$id' and active like '1' order by date_added";
 		// print("select: $select<br>\n");
@@ -215,33 +215,33 @@ function load_reservation_details($id)
 		}
 		$reservations[] = $reservation;
 	}
-	
+
 	return($reservations);
 }
 
 function load_reservations_with_fines($options)
 {
 	global $db;
-	
+
 	$reservations = array();
 	$where = "WHERE 1";
-	
+
 	if(isset($options['sched_start_time']))
 		$where .= " AND `sched_start_time` >= '".$options['sched_start_time']."'";
-	
+
 	if(isset($options['sched_end_time']))
 		$where .= " AND `sched_end_time` < '".$options['sched_end_time']."'";
-		
+
 	if(isset($options['active']))
 		$where .= " AND `active` like '".$options['active']."'";
-	
+
 	if(isset($options['sort asc']))
 		$sort = "ORDER BY ".$options['sort asc'];
 	else if(isset($options['sort desc']))
 		$sort = "ORDER BY ".$options['sort desc'];
 	else
 		$sort = "ORDER BY sched_start_time";
-		
+
 	$select = "select * from reservations $where $sort";
 	// print("select: $select<br>\n");
 	$res = $db->query($select);
@@ -266,13 +266,13 @@ function load_reservations_with_fines($options)
 			}
 			$reservation->fines[] = $fine;
 		}
-		
+
 		$select = "SELECT * FROM study_rooms WHERE id like '$reservation->room_id'";
 		//print("select: $select<br>\n");
 		$res_room = $db->query($select);
 		while($res_room->fetchInto($room))
 			$reservation->room = $room;
-			
+
 		$reservations[] = $reservation;
 	}
 
@@ -282,7 +282,7 @@ function load_reservations_with_fines($options)
 function load_calendar_reservations()
 {
 	global $db;
-	
+
 	$now = date('Y-m-d H:i:s',strtotime('now'));
 	$select = "select * from reservations where sched_end_time > '$now' and cancelled like '0' and status not like 'Cancelled' and status not like 'Completed' and active like '1' order by room_id,date,sched_start_time";
 	//print("select: $select<br>\n");
@@ -314,13 +314,13 @@ function get_reservation_for_checked_out_key($key_barcode)
 function create_reservation($room_id,$room_section,$user_id,$date,$start_time,$end_time,$otf=null,$mobile=0)
 {
 	global $db;
-	
+
 	$time_conflicts = get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$end_time,$otf);
 	if(count($time_conflicts) > 0)
 	{
 		return($time_conflicts);
 	}
-	
+
 	$limit_conflicts = get_limit_conflicts($user_id,$date,$start_time,$end_time);
 	if(count($limit_conflicts) > 0)
 	{
@@ -332,13 +332,13 @@ function create_reservation($room_id,$room_section,$user_id,$date,$start_time,$e
 	{
 		return($ptype_conflicts);
 	}
-	
+
 	$expiration_conflicts = get_expiration_conflicts($user_id);
 	if(count($expiration_conflicts) > 0)
 	{
 		return($expiration_conflicts);
 	}
-	
+
 	// submit reservation
 	$date_added = date('Y-m-d H:i:s',strtotime('now'));
 	$fields = array('room_id','room_section','user_id','date','sched_start_time','sched_end_time','status','active');
@@ -352,9 +352,9 @@ function create_reservation($room_id,$room_section,$user_id,$date,$start_time,$e
 		$fields[] = "date_added";
 		$values[] = $date_added;
 		$reservation_id = $db->insert('reservations',$fields,$values);
-		
+
 		update_reservation_status($reservation_id,"Scheduled");
-		
+
 		// if reservation is not an on-the-fly checkout and starts in the future, send confirmation email to patron
 		if(strtotime($start_time) > strtotime('now') && $otf != 1)
 			$email_res = reservation_confirmation_email($reservation_id);
@@ -364,38 +364,38 @@ function create_reservation($room_id,$room_section,$user_id,$date,$start_time,$e
 		// already submitted, do nothing
 		// TODO: lookup reservation id
 	}
-	
+
 	return($reservation_id);
 }
 
 function reschedule_reservation($original_reservation_id,$room_id,$room_section,$user_id,$date,$start_time,$end_time,$otf=null)
 {
 	global $db;
-	
+
 	$time_conflicts = get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$end_time,$otf,$original_reservation_id);
 	if(count($time_conflicts) > 0)
 	{
 		return($time_conflicts);
 	}
-	
+
 	$limit_conflicts = get_limit_conflicts($user_id,$date,$start_time,$end_time,$original_reservation_id);
 	if(count($limit_conflicts) > 0)
 	{
 		return($limit_conflicts);
 	}
-	
+
 	$ptype_conflicts = get_ptype_conflicts($user_id);
 	if(count($ptype_conflicts) > 0)
 	{
 		return($ptype_conflicts);
 	}
-	
+
 	$expiration_conflicts = get_expiration_conflicts($user_id);
 	if(count($expiration_conflicts) > 0)
 	{
 		return($expiration_conflicts);
 	}
-	
+
 	// change reservation
 	$fields = array('room_id','room_section','date','sched_start_time','sched_end_time');
 	$values = array($room_id,$room_section,date('Y-m-d',strtotime($date)),date('Y-m-d H:i:s',strtotime($start_time)),date('Y-m-d H:i:s',strtotime($end_time)));
@@ -410,29 +410,29 @@ function reschedule_reservation($original_reservation_id,$room_id,$room_section,
 function cancel_reservation($reservation_id,$user_id,$reason)
 {
 	global $db;
-	
+
 	// TODO: check to see if reservation has already been cancelled
-	
+
 	// TODO: double-check to see if reservation can be cancelled (not checked-out, in the future, etc...)
-	
+
 	$db->update("reservations",array("cancelled","cancellation_reason"),array("1",$reason),"id like '$reservation_id' and user_id like '$user_id'",$reservation_id,"Cancelled reservation");
 	update_reservation_status($reservation_id,"Cancelled");
 	// TODO: check for update errors
-	
+
 	// send confirmation email to patron
 	$email_res = reservation_cancellation_email($db,$reservation_id);
-	
+
 	// TODO: check for email sending errors
-	
+
 	// TODO: if errors are found, report them
-	
+
 	return(true);
 }
 
 function checkout_key($reservation_id,$room_id,$checkout_key_barcode)
 {
 	global $db;
-	
+
 	// print("attempting to checkout reservation...<br>\n");
 	// check to make sure key matches room
 	$select_key = "select room_id,status from rooms_keys where key_barcode like '$checkout_key_barcode' and active like '1'";
@@ -445,7 +445,7 @@ function checkout_key($reservation_id,$room_id,$checkout_key_barcode)
 		{
 			$error_messages[] = "Key Barcode ($checkout_key_barcode) is not associated with this room";
 		}
-		
+
 		if(strcmp($key->status,'Available'))
 		{
 			$error_messages[] = "Key Barcode ($checkout_key_barcode) is not available for checkout. Current status: $key->status";
@@ -455,7 +455,7 @@ function checkout_key($reservation_id,$room_id,$checkout_key_barcode)
 	{
 		$error_messages[] = "The Key Barcode ($checkout_key_barcode) cannot be found.";
 	}
-	
+
 	if(count($error_messages)==0)
 	{
 		$select_dup = "select * from reservations where id like '$reservation_id' and key_checkout_time is NULL and active like '1'";
@@ -472,7 +472,7 @@ function checkout_key($reservation_id,$room_id,$checkout_key_barcode)
 
 			// update reservation status
 			update_reservation_status($reservation_id,'Checked Out');
-			
+
 			// update key status
 			update_key_status($checkout_key_barcode,'Checked Out');
 		}
@@ -483,9 +483,9 @@ function checkout_key($reservation_id,$room_id,$checkout_key_barcode)
 function checkin_key($reservation_id,$room_id,$checkin_key_barcode)
 {
 	global $db;
-	
+
 	$error_messages = array();
-	
+
 	// check to make sure key matches room
 	$select_key = "select room_id from rooms_keys where key_barcode like '$checkin_key_barcode' and active like '1'";
 	$res_key = $db->query($select_key);
@@ -501,7 +501,7 @@ function checkin_key($reservation_id,$room_id,$checkin_key_barcode)
 	{
 		$error_messages[] = "The Key Barcode ($checkin_key_barcode) cannot be found.";
 	}
-	
+
 	// check to make sure key matches reservation
 	$select_key = "select room_id from reservations where id like '$reservation_id' and key_barcode like '$checkin_key_barcode' and active like '1'";
 	$res_key = $db->query($select_key);
@@ -509,7 +509,7 @@ function checkin_key($reservation_id,$room_id,$checkin_key_barcode)
 	{
 		$error_messages[] = "Key Barcode ($checkin_key_barcode) is not associated with this reservation.";
 	}
-	
+
 	if(count($error_messages)==0)
 	{
 		// check in key
@@ -517,30 +517,30 @@ function checkin_key($reservation_id,$room_id,$checkin_key_barcode)
 		$values = array(date('Y-m-d H:i:s',strtotime('now')),$_SESSION['LibRooms']['UserID']);
 		$result = $db->update('reservations',$fields,$values,"id like '$reservation_id'",$reservation_id,"Key checked-in");
 		// TODO: if error with update, add to error messages
-		
+
 		if(count($error_messages)==0)
 		{
 			// update reservation status
 			update_reservation_status($reservation_id,'Completed');
-			
+
 			// update key status
 			update_key_status($checkin_key_barcode,'Available');
-			
+
 			// assign fines
 			$reservations = load_reservation_details($reservation_id);
 			foreach($reservations as $reservation)
 				break;
-			
+
 			if(strtotime($reservation->sched_end_time)+(FINE_GRACE_PERIOD*60) < strtotime($reservation->key_checkin_time))
 			{
 				// key returned after the grace period, assess fine
 				$num_hours_overdue = ceil((strtotime($reservation->key_checkin_time)-strtotime($reservation->sched_end_time))/3600);
 				$fine_amount = $num_hours_overdue*FINE_PER_HOUR_OVERDUE;
-				
+
 				// if the fine exceeds the max fine, then just limit to the max fine
 				if($fine_amount > MAX_HOURLY_FINE)
 					$fine_amount = MAX_HOURLY_FINE;
-					
+
 				assign_fine($reservation_id,$fine_amount,"Room key returned late");
 			}
 		}
@@ -558,7 +558,7 @@ function update_key_status($key_barcode,$new_status)
 function assign_fine($reservation_id,$amount,$description)
 {
 	global $db;
-	
+
 	// TODO: check for duplicate entry
 	$fields = array('reservation_id','amount','description','resolved','date_added');
 	$values = array($reservation_id,$amount,$description,"0",date("Y-m-d H:i:s"));
@@ -568,13 +568,13 @@ function assign_fine($reservation_id,$amount,$description)
 function update_reservation_status($reservation_id,$new_status)
 {
 	global $db;
-	
+
 	$res = $db->update("reservations",array('status'),array($new_status),"id like '$reservation_id'",$reservation_id,"Reservation status updated");
 	$fields = array('reservation_id','status','changed_by');
 	$values = array($reservation_id,$new_status,$_SESSION['LibRooms']['UserID']);
 	if(strcmp($_SESSION['LibRooms']['UserID'],''))
 		$sh_res = $db->insert("status_history",$fields,$values);
-		
+
 	return($res);
 }
 
@@ -587,13 +587,13 @@ function update_reservation_status($reservation_id,$new_status)
 function get_available_rooms($date,$start_time,$end_time,$room_filter,$user_id=null,$otf=0,$reschedule_reservation_id=null)
 {
 	global $db;
-	
+
 	$matches = array();
-	
+
 	$all_rooms = load_rooms(null,$room_filter);
 	$all_room_groups = load_room_groups();
 	$all_reservations = load_calendar_reservations();
-	
+
 	foreach($all_rooms as $room_group_id => $group_rooms)
 	{
 		foreach($group_rooms as $room_id => $room)
@@ -617,7 +617,7 @@ function get_available_rooms($date,$start_time,$end_time,$room_filter,$user_id=n
 function load_rooms($room_ids=null,$options=array())
 {
 	global $db;
-	
+
 	$room_limiter = "";
 	if($room_ids)
 	{
@@ -633,22 +633,22 @@ function load_rooms($room_ids=null,$options=array())
 			$room_limiter .= "AND id like '$room_ids'";
 		}
 	}
-	
+
 	if(isset($options['id']))
 	{
 		$room_limiter .= "AND id like '".$options['id']."'";
 	}
-	
+
 	if(isset($options['room_number']))
 	{
 		$room_number_limiter .= "AND room_number like '".$options['room_number']."'";
 	}
-	
+
 	if(isset($options['out_of_order']))
 	{
 		$room_number_limiter .= "AND out_of_order like '".$options['out_of_order']."'";
 	}
-	
+
 	if(isset($options['capacity']))
 	{
 		// separate capacity range into low-high thresholds
@@ -657,25 +657,25 @@ function load_rooms($room_ids=null,$options=array())
 		$capacity_high = $capacity_parts[1];
 		$room_number_limiter .= "AND capacity >= '$capacity_low' AND capacity <= '$capacity_high'";
 	}
-	
+
 	if(isset($options['capacity gte']))
 	{
 		$room_number_limiter .= "AND capacity >= '".$options['capacity gte']."'";
 	}
-	
-	
+
+
 	if(isset($options['sort asc']))
 		$sort = "ORDER BY ".$options['sort asc'];
 	else if(isset($options['sort desc']))
 		$sort = "ORDER BY ".$options['sort desc'];
 	else
 		$sort = "ORDER BY capacity,room_number";
-		
+
 	if(isset($options['limit']))
 		$limit = "LIMIT ".$limit;
 	else
 		$limit = "";
-	
+
 	$select = "SELECT * FROM study_rooms WHERE 1 $room_limiter $room_number_limiter AND active like '1' $sort $limit";
 	//print("select: $select<br>\n");
 	$res = $db->query($select);
@@ -685,14 +685,16 @@ function load_rooms($room_ids=null,$options=array())
 		$room->amenities = array();
 		$room->keys = array();
 		$room->room_number = ltrim($room->room_number,'0');
-		
+
 		$all_rooms[$room->id] = $room;
 	}
-	
+
+	print("select: $select<br>\n");
+
 	$room_limiter = str_replace("AND id","AND room_id",$room_limiter);
-	
+
 	$all_amenities = load_amenities();
-	
+
 	// load amenity associations
 	$select = "SELECT * FROM study_rooms_amenities WHERE 1 $room_limiter AND active like '1' ORDER BY ordering,id";
 	//print("select: $select<br>\n");
@@ -711,8 +713,8 @@ function load_rooms($room_ids=null,$options=array())
 			}
 		}
 	}
-	
-	
+
+
 	if(isset($options['amenities and']))
 	{
 		// remove rooms that don't match all amenity filters
@@ -729,7 +731,7 @@ function load_rooms($room_ids=null,$options=array())
 						break;
 					}
 				}
-				
+
 				if($a_ok)
 					continue;
 				else
@@ -740,8 +742,8 @@ function load_rooms($room_ids=null,$options=array())
 			}
 		}
 	}
-	
-	
+
+
 	// load images
 	$select = "select * from room_images where 1 $room_limiter AND active like '1' order by ordering,id";
 	$res = $db->query($select);
@@ -762,7 +764,7 @@ function load_rooms($room_ids=null,$options=array())
 			$all_rooms[$room_image->room_id]->images[$room_image->type][] = $room_image;
 		}
 	}
-	
+
 	// load keys
 	$select = "select * from rooms_keys where 1 $room_limiter AND active like '1'";
 	$res = $db->query($select);
@@ -787,7 +789,7 @@ function load_rooms($room_ids=null,$options=array())
 	{
 		$return = $all_rooms;
 	}
-	
+
 	return($return);
 }
 
@@ -795,7 +797,7 @@ function load_rooms($room_ids=null,$options=array())
 function load_room_capacity_options()
 {
 	global $db;
-	
+
 	$select = "SELECT distinct capacity FROM study_rooms WHERE out_of_order like 'No' and active like '1' order by capacity";
 	//print("select: $select<br>\n");
 	$res = $db->query($select);
@@ -815,10 +817,10 @@ function get_room_current_availability($room_id)
 
 	foreach($rooms as $room)
 		break;
-	
+
 	$room->max_gap->start_time = 0;
 	$room->max_gap->end_time = 0;
-	
+
 	for($section=1;$section<=$room->max_simultaneous_reservations;$section++)
 	{
 		// check for current/upcoming reservations for this room
@@ -826,17 +828,17 @@ function get_room_current_availability($room_id)
 		unset($next_reservation);
 		foreach($upcoming_reservations as $next_reservation)
 			break;
-		
+
 		// print("next res:\n");
 		// pr($next_reservation);
-		
+
 		// check to see if any of the keys are checked out for this room
 		foreach($room->keys as $key)
 		{
 			if(!strcmp($key->status,'Checked Out'))
 			{
 				// room section is checked out
-				
+
 				// load reservation
 				$current_checkout = load_reservations(array('room_id'=>$room_id,'room_section'=>$section,'status'=>'Checked Out','key_barcode'=>$key->key_barcode,'active'=>'1','limit'=>'1'));
 
@@ -848,13 +850,13 @@ function get_room_current_availability($room_id)
 				break;
 			}
 		}
-		
+
 		if(strcmp($next_reservation->sched_start_time,'') && strtotime($next_reservation->sched_start_time) < strtotime('now'))
 		{
 			// there is a reservation scheduled for now
 			continue;
 		}
-		
+
 		// room section has some availability right now
 		$current_minute = date('i');
 		if($current_minute < 30)
@@ -862,7 +864,7 @@ function get_room_current_availability($room_id)
 		else
 			$current_minute = "30";
 		$start_time = date("Y-m-d H:".$current_minute.":00");
-		
+
 		// TODO: HACK: change on the fly reservations to start at the next unit of precision, rather than the previous
 		$start_time = date("Y-m-d H:i:s",strtotime("+".RES_PRECISION." minutes",strtotime($start_time)));
 
@@ -881,7 +883,7 @@ function get_room_current_availability($room_id)
 		{
 			$end_time = date("Y-m-d H:i:s",strtotime("+ ".DEFAULT_MAX_RES_LEN." minutes",strtotime($start_time)));
 		}
-		
+
 		// if this is the biggest gap, update max gap
 		if(strtotime($end_time) - strtotime($start_time) > strtotime($room->max_gap->end_time) - strtotime($room->max_gap->start_time))
 		{
@@ -910,9 +912,9 @@ function roomHasAmenity($room_amenities,$amenity_id)
 function get_room_current_status($room_id,$section_id=1)
 {
 	global $db;
-	
+
 	// print("id: $room_id<br>\n");
-	
+
 	// load the current status of a room section
 	if(!strcmp($room->out_of_order,"Yes"))
 	{
@@ -922,7 +924,7 @@ function get_room_current_status($room_id,$section_id=1)
 	{
 		$now = strtotime('now');
 		$when_available = $now;
-		
+
 		// check to see if the room is currently checked out and/or overdue
 		$select_checkout_for_room = "select * from reservations where room_id like '$room_id' and room_section like '$section_id' and status like 'Checked Out' and active like '1'";
 		$res_checkout_for_room = $db->query($select_checkout_for_room);
@@ -950,14 +952,14 @@ function get_room_current_status($room_id,$section_id=1)
 		{
 			$current_status = "<s6>Error: Multiple checkouts</s6>";
 		}
-		
+
 		$todays_hours = load_hours($db,date("Y-m-d"));
-		
+
 		// locate scheduled reservations
 		$select_next_reservations_for_room = "select * from reservations where room_id like '$room_id' and room_section like '$section_id' and (status like 'Scheduled') and sched_start_time < '$todays_hours->close_time' and active like '1' order by sched_start_time";
 		$res_next_reservations_for_room = $db->query($select_next_reservations_for_room);
 		$available_until = -1;
-		
+
 		while($res_next_reservations_for_room->fetchInto($next_reservation_for_room))
 		{
 			//if(strtotime("+".DEFAULT_MIN_RES_LEN." minutes",$when_available) <= strtotime($next_reservation_for_room->sched_start_time))
@@ -965,13 +967,13 @@ function get_room_current_status($room_id,$section_id=1)
 			{
 				// there is a gap for a reservation to start at this time
 				$available_until = strtotime($next_reservation_for_room->sched_start_time);
-				
+
 				if(strtotime("+".DEFAULT_MAX_RES_LEN." minutes",$when_available) < $available_until)
 				{
 					// reduce to max res len
 					$available_until = strtotime("+".DEFAULT_MAX_RES_LEN." minutes",$when_available);
 				}
-				
+
 				break;
 			}
 			else
@@ -982,11 +984,11 @@ function get_room_current_status($room_id,$section_id=1)
 		}
 		if($available_until == -1)
 			$available_until = strtotime("+".DEFAULT_MAX_RES_LEN." minutes",$when_available);
-			
+
 		//print("avail until: ".date("H:i:s",$available_until)."<br>\n");
-		
+
 		$room->when_available_datestamp = date("Y-m-d H:i:s",$when_available);
-		
+
 		// convert when_available to a readable format
 		if($when_available == $now)
 			$room->when_available = "Now";
@@ -994,7 +996,7 @@ function get_room_current_status($room_id,$section_id=1)
 			$room->when_available = date("g:ia",$when_available);
 		$minutes_until_available = ceil(($when_available - strtotime('now'))/60);
 		$hours_until_available = floor($minutes_until_available/60);
-		
+
 		if($hours_until_available == 0 && $minutes_until_available == 0)
 			$room->when_available_countdown = "0:00";
 		else if($hours_until_available == 0)
@@ -1003,15 +1005,15 @@ function get_room_current_status($room_id,$section_id=1)
 			$room->when_available_countdown = "1:".str_pad(($minutes_until_available % 60),2,"0",STR_PAD_LEFT)." min)";
 		else
 			$room->when_available_countdown = $hours_until_available.":".str_pad(($minutes_until_available % 60),2,"0",STR_PAD_LEFT);
-		
-		
+
+
 		// convert available until to a readable format
 		// print("avail til: ".date("H:i:s",$available_until)."<br>\n");
 		$minutes = date("i",$available_until);
 		if(($minutes % RES_PRECISION) > 0)
 		{
 			// round up by reservation precision
-			
+
 			$minutes = $minutes + (RES_PRECISION - ($minutes % RES_PRECISION));
 			if($minutes < 60)
 			{
@@ -1029,7 +1031,7 @@ function get_room_current_status($room_id,$section_id=1)
 			$room->available_until = date("g:ia",$available_until);
 			$room->available_until_datestamp = date("Y-m-d H:i:00",$available_until);
 		}
-		
+
 		// print(date("g:i:s",$when_available) ." - " . date("g:i:s",strtotime($room->available_until))."<br>\n");
 		$minutes_available_until = ceil((strtotime($room->available_until) - $when_available)/60);
 		$hours_available_until = floor($minutes_available_until/60);
@@ -1041,18 +1043,18 @@ function get_room_current_status($room_id,$section_id=1)
 			$room->available_until = date("g:ia",strtotime($room->available_until))." (1 hour ".($minutes_available_until % 60)." min)";
 		else
 			$room->available_until = date("g:ia",strtotime($room->available_until))." (".$hours_available_until . " hours ".($minutes_available_until % 60) . " min)";
-		
+
 		//$room->available_until .= " (max $hours_available_until hours)";
-	}	
-	
+	}
+
 	if(strcmp($room->when_available_countdown,"0:00") && !strcmp($current_status,"<s1>Available</s1>"))
 		$current_status = "<s3>Reserved</s3>";
-	
+
 	$room->current_status = $current_status;
 	//$room->current_checkout = $checkout_for_room;
-	
+
 	return($room);
-	
+
 }
 
 
@@ -1060,9 +1062,9 @@ function get_room_current_status($room_id,$section_id=1)
 function get_room_status($room_id,$section_id,$date,$start_time,$end_time)
 {
 	global $db;
-	
+
 	// print("id: $room_id<br>\n");
-	
+
 	// load the current status of a room section
 	if(!strcmp($room->out_of_order,"Yes"))
 	{
@@ -1071,10 +1073,10 @@ function get_room_status($room_id,$section_id,$date,$start_time,$end_time)
 	else
 	{
 		/*
-		
+
 		$now = strtotime('now');
 		$when_available = $now;
-		
+
 		// check to see if the room is currently checked out and/or overdue
 		$select_checkout_for_room = "select * from reservations where room_id like '$room_id' and room_section like '$section_id' and status like 'Checked Out' and sched_end_time > '$start_time' and active like '1'";
 		$res_checkout_for_room = $db->query($select_checkout_for_room);
@@ -1103,9 +1105,9 @@ function get_room_status($room_id,$section_id,$date,$start_time,$end_time)
 			$room_status = "Error: Multiple checkouts";
 		}
 		*/
-		
+
 		$days_hours = load_hours($db,date("Y-m-d",strtotime($date)));
-		
+
 		// locate scheduled reservations
 		$select_next_reservations_for_room = "select * from reservations where room_id like '$room_id' and room_section like '$section_id' and (status like 'Scheduled' OR status like 'Checked Out') and (sched_start_time <= '$end_time' OR sched_end_time > '$start_time') and active like '1' order by sched_start_time";
 		print("select_next_reservations_for_room:$select_next_reservations_for_room<br>\n");
@@ -1123,7 +1125,7 @@ function get_room_status($room_id,$section_id,$date,$start_time,$end_time)
 
 	$room->status = $room_status;
 	return($room);
-	
+
 }
 
 
@@ -1133,17 +1135,17 @@ function get_room_status($room_id,$section_id,$date,$start_time,$end_time)
 function load_room_groups($options=array())
 {
 	global $db;
-	
+
 	$where = "WHERE 1";
-	
+
 	if(isset($options['sort asc']))
 		$sort = "ORDER BY ".$options['sort asc'];
 	else if(isset($options['sort desc']))
 		$sort = "ORDER BY ".$options['sort desc'];
 	else
 		$sort = "ORDER BY ordering,name";
-	
-	
+
+
 	// load room_groups
 	$select = "SELECT * FROM room_groups $where AND active LIKE '1' $sort";
 	//print("select: $select<br>\n");
@@ -1161,21 +1163,21 @@ function load_room_groups($options=array())
 function load_amenities($options=array())
 {
 	global $db;
-	
+
 	$where = "WHERE 1";
 	if(isset($options['search_filter']))
 	{
 		$where .= " AND search_filter like '".$options['search_filter']."'";
 	}
-	
+
 	if(isset($options['sort asc']))
 		$sort = "ORDER BY ".$options['sort asc'];
 	else if(isset($options['sort desc']))
 		$sort = "ORDER BY ".$options['sort desc'];
 	else
 		$sort = "ORDER BY name,description";
-	
-	
+
+
 	// load amenities
 	$select = "SELECT * FROM amenities $where AND active LIKE '1' $sort";
 	//print("select: $select<br>\n");
@@ -1193,21 +1195,21 @@ function load_amenities($options=array())
 function load_room_groups($options=array())
 {
 	global $db;
-	
+
 	$where = "WHERE 1";
 	if(isset($options['search_filter']))
 	{
 		$where .= " AND search_filter like '".$options['search_filter']."'";
 	}
-	
+
 	if(isset($options['sort asc']))
 		$sort = "ORDER BY ".$options['sort asc'];
 	else if(isset($options['sort desc']))
 		$sort = "ORDER BY ".$options['sort desc'];
 	else
 		$sort = "ORDER BY name,description";
-	
-	
+
+
 	// load room groups
 	$select = "SELECT * FROM room_groups $where AND active LIKE '1' $sort";
 	//print("select: $select<br>\n");
@@ -1225,12 +1227,12 @@ function load_room_groups($options=array())
 function load_fines($options=array())
 {
 	global $db;
-	
+
 	$where = "WHERE 1";
-	
+
 	if(isset($options['id']))
 		$where .= " AND id like '".$options['id']."'";
-	
+
 	$select = "SELECT * FROM fines $where AND active LIKE '1'";
 	//print("select: $select<br>\n");
 	$res = $db->query($select);
@@ -1271,11 +1273,11 @@ function get_key_by_barcode($barcode)
 function find_users_by_name_or_patron_id($query)
 {
 	global $db;
-	
+
 	$users = array();
 	$select_users = "select * from users where (patron_id like '$query' OR barcode like '$query' OR last_name like '$query') and active like '1'";
 	$res_users = $db->query($select_users);
-	
+
 	while($res_users->fetchInto($user))
 	{
 		// select roles
@@ -1285,10 +1287,10 @@ function find_users_by_name_or_patron_id($query)
 		{
 			$user->roles[] = $role;
 		}
-		
+
 		// select reservations
 		$user->reservations = load_reservations_for_user($user->id,array('active'=>'1','sort asc'=>'date,sched_start_time'));
-		
+
 		$users[$user->id] = $user;
 	}
 
@@ -1300,21 +1302,21 @@ function find_users_by_name_or_patron_id($query)
 function get_reservation_credits($user_id,$date)
 {
 	global $db;
-	
+
 	if(strtotime($date) < strtotime(date('Y-m-d')))
 		$date = date('Y-m-d');
-	
+
 	/* for week */
 	if(date('w',strtotime($date)) == 0)
 		$window_start = date('Y-m-d',strtotime($date));
 	else
 		$window_start = date('Y-m-d',strtotime("last Sunday",strtotime($date)));
 	$window_end = date('Y-m-d',strtotime("next Sunday",strtotime($window_start)));
-	
+
 	$select_user_reservations = "select * from reservations where user_id like '$user_id' and sched_start_time >= '$window_start' and sched_end_time < '$window_end' AND cancelled like '0' and active like '1'";
 	//print("select user reservations (in res-window): $select_user_reservations<br>\n");
 	$res_user_reservations = $db->query($select_user_reservations);
-	
+
 	$minutes_used_week = 0;
 	while($res_user_reservations->fetchInto($reservation))
 	{
@@ -1328,21 +1330,21 @@ function get_reservation_credits($user_id,$date)
 		else
 			$minutes_used_week += (strtotime($reservation->sched_end_time) - strtotime($reservation->sched_start_time))/60;
 	}
-	
+
 	$credits->week_hours_remaining = round(MAX_RESERVATION_HOURS_PER_WEEK - ($minutes_used_week/60),2);
 	$credits->week_window_start = $window_start;
 	$credits->week_window_end = $window_end;
-	
-	
+
+
 	/* for day */
 	$hours = load_hours($db,$date);
 	$window_start = date('Y-m-d H:i:s',strtotime($hours->open_time));
 	$window_end = date('Y-m-d H:i:s',strtotime($hours->close_time));
-	
+
 	$select_user_reservations = "select * from reservations where user_id like '$user_id' and sched_start_time >= '$window_start' and sched_end_time < '$window_end' AND cancelled like '0' and active like '1'";
 	//print("select user reservations (in res-window): $select_user_reservations<br>\n");
 	$res_user_reservations = $db->query($select_user_reservations);
-	
+
 	/* max reservation hours per day */
 	$minutes_used_day = 0;
 	$res_user_reservations = $db->query($select_user_reservations);
@@ -1358,9 +1360,9 @@ function get_reservation_credits($user_id,$date)
 		else
 			$minutes_used_day += (strtotime($reservation->sched_end_time) - strtotime($reservation->sched_start_time))/60;
 	}
-	
+
 	$credits->day_hours_remaining = round(MAX_RESERVATION_HOURS_PER_DAY - ($minutes_used_day/60),2);
-	
+
 	// correct potentially negative credits
 	if($credits->week_hours_remaining < 0)
 		$credits->week_hours_remaining = 0;
@@ -1373,11 +1375,11 @@ function get_reservation_credits($user_id,$date)
 function get_user_by_id($id)
 {
 	global $db;
-	
+
 	$users = array();
 	$select_users = "select * from users where id like '$id'";
 	$res_users = $db->query($select_users);
-	
+
 	while($res_users->fetchInto($user))
 	{
 		// select roles
@@ -1387,10 +1389,10 @@ function get_user_by_id($id)
 		{
 			$user->roles[] = $role;
 		}
-		
+
 		// select reservations
 		$user->reservations = load_reservations_for_user($user->id,array('active'=>'1','sort asc'=>'date,sched_start_time'));
-		
+
 		return($user);
 	}
 }
@@ -1401,15 +1403,15 @@ function get_user_by_id($id)
 function get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$end_time,$otf,$reschedule_reservation_id=null)
 {
 	global $db;
-	
+
 	$conflicts = array();
-	
+
 	$rooms = load_rooms(null,array('id'=>$room_id));
 	foreach($rooms as $room)
 		break;
-	
+
 	$hours = load_hours($db,$date);
-	
+
 	// check to make sure there aren't any conflicts for the room
 	$select_conflicts = "select * from reservations where room_id like '$room_id' and room_section like '$room_section' and ((sched_end_time > '".date('Y-m-d H:i:s',strtotime($start_time))."' AND sched_start_time <= '".date('Y-m-d H:i:s',strtotime($start_time))."') OR (sched_end_time >= '".date('Y-m-d H:i:s',strtotime($end_time))."' AND sched_start_time < '".date('Y-m-d H:i:s',strtotime($end_time))."') OR (sched_start_time >= '".date('Y-m-d H:i:s',strtotime($start_time))."' AND sched_end_time <= '".date('Y-m-d H:i:s',strtotime($end_time))."')) AND cancelled like '0' AND key_checkin_time is null and active like '1'";
 	if($reschedule_reservation_id && $reschedule_reservation_id > 0)
@@ -1421,14 +1423,14 @@ function get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$e
 	{
 		unset($conflict);
 		if($num_conflicts == 1)
-			$conflict->message = "The room reservation you selected conflicts with an existing room reservation."; 
+			$conflict->message = "The room reservation you selected conflicts with an existing room reservation.";
 		else
-			$conflict->message = "The room reservation you selected conflicts with multiple existing room reservations."; 
+			$conflict->message = "The room reservation you selected conflicts with multiple existing room reservations.";
 		while($res_conflicts->fetchInto($res))
 			$conflict->data[] = $res;
 		$conflicts[] = $conflict;
 	}
-	
+
 	// check to make sure there aren't any conflicts for the patron
 	$select_conflicts = "select * from reservations where user_id like '$user_id' and (sched_end_time > '".date('Y-m-d H:i:s',strtotime($start_time))."' AND sched_start_time < '".date('Y-m-d H:i:s',strtotime($end_time))."') AND cancelled like '0' AND status not like 'Cancelled' AND status not like 'Completed' AND active like '1'";
 	if($reschedule_reservation_id && $reschedule_reservation_id > 0)
@@ -1447,7 +1449,7 @@ function get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$e
 			$conflict->data[] = $res;
 		$conflicts[] = $conflict;
 	}
-	
+
 	// double-check the libary is not closed
 	if(strtotime($start_time) < strtotime($hours->open_time) || strtotime($end_time) > strtotime($hours->close_time))
 	{
@@ -1455,7 +1457,7 @@ function get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$e
 		$conflict->message = "You have selected a reservation that falls outside of the available hours for " . date('m/d/Y',strtotime($date)) . ".";
 		$conflicts[] = $conflict;
 	}
-	
+
 	// double-check the reservation is not for a time too far in the future
 	$max_date_hours = load_hours($db,date('Y-m-d',strtotime("+".(MAX_FUTURE_RES_DAYS-1)." days",strtotime('now'))));
 	if(strtotime($start_time) > strtotime($max_date_hours->close_time))
@@ -1464,7 +1466,7 @@ function get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$e
 		$conflict->message = "You have selected a reservation that is too far in the future. Reservations may only be made as far as ".MAX_FUTURE_RES_DAYS." days in advance.";
 		$conflicts[] = $conflict;
 	}
-	
+
 	// double-check to make sure the reservation length is not greater than the max allowed
 	$res_length = round((strtotime($end_time) - strtotime($start_time))/60);
 	if($res_length > DEFAULT_MAX_RES_LEN && strcmp($otf,"1"))
@@ -1473,7 +1475,7 @@ function get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$e
 		$conflict->message = "You have selected a reservation that exceeds the maximum allowed duration of ".DEFAULT_MAX_RES_LEN." minutes.";
 		$conflicts[] = $conflict;
 	}
-	
+
 	// double-check to make sure the reservation length is not shorter than the min allowed
 	if($res_length < DEFAULT_MIN_RES_LEN)
 	{
@@ -1488,7 +1490,7 @@ function get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$e
 			$conflicts[] = $conflict;
 		}
 	}
-	
+
 	// double-check that the end time comes after the start time
 	if($res_length <= 0)
 	{
@@ -1496,7 +1498,7 @@ function get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$e
 		$conflict->message = "You have selected an invalid start time or end time for your reservation.";
 		$conflicts[] = $conflict;
 	}
-	
+
 	// double-check reservation start time is for a time in the future (if staff/admin -> minus 1 res_precision)
 	if(isset($_SESSION['LibRooms']['Roles']) && (in_array('Staff',$_SESSION['LibRooms']['Roles']) || in_array('Admin',$_SESSION['LibRooms']['Roles'])))
 		$min_start_time = strtotime(RES_PRECISION . " minutes ago",strtotime('now'));
@@ -1508,8 +1510,8 @@ function get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$e
 		$conflict->message = "You have selected a start time in the past.";
 		$conflicts[] = $conflict;
 	}
-	
-	
+
+
 	// double-check room is not out-of-order
 	if(!strcmp($room->out_of_order,'Yes'))
 	{
@@ -1517,7 +1519,7 @@ function get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$e
 		$conflict->message = "The room you selected is currently out of order.";
 		$conflicts[] = $conflict;
 	}
-	
+
 	// confirm user has a staff or admin role before allowing first come first serve reservations
 	if(isset($_SESSION['LibRooms']['Roles']) && !in_array('Staff',$_SESSION['LibRooms']['Roles']) && !in_array('Admin',$_SESSION['LibRooms']['Roles']) && !strcmp($room->fcfs,'Yes'))
 	{
@@ -1525,7 +1527,7 @@ function get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$e
 		$conflict->message = "You do not have permission to reserve first come first serve rooms.";
 		$conflicts[] = $conflict;
 	}
-	
+
 	// if back-to-back reservations are not allowed, check to make sure this is not a back-to-back
 	if(!strcmp(BACK_TO_BACK_RESERVATIONS,"No"))
 	{
@@ -1538,31 +1540,31 @@ function get_time_conflicts($room_id,$room_section,$user_id,$date,$start_time,$e
 		if($num_conflicts > 0)
 		{
 			unset($conflict);
-			$conflict->message = "Back to back reservations by the same patron for the same room are not allowed."; 
+			$conflict->message = "Back to back reservations by the same patron for the same room are not allowed.";
 			while($res_conflicts->fetchInto($res))
 				$conflict->data[] = $res;
 			$conflicts[] = $conflict;
 		}
 	}
-	
+
 	return($conflicts);
 }
 
 function get_limit_conflicts($user_id,$date,$start_time,$end_time,$reschedule_reservation_id=null)
 {
 	global $db;
-	
+
 	$errors = array();
-	
+
 	// check to make sure that this reservation will not exceed any limits for the user
-	
+
 	/* max reservations per week */
     if(date('w',strtotime($date)) == 0)
 		$window_start = date('Y-m-d',strtotime($date));
 	else
 		$window_start = date('Y-m-d',strtotime("last Sunday",strtotime($date)));
 	$window_end = date('Y-m-d',strtotime("next Sunday",strtotime($window_start)));
-	
+
 	$select_user_reservations = "select * from reservations where user_id like '$user_id' and sched_start_time >= '$window_start' and sched_end_time < '$window_end' AND cancelled like '0' and active like '1'";
 	if($reschedule_reservation_id && $reschedule_reservation_id > 0)
 		$select_user_reservations .= " AND id not like '$reschedule_reservation_id'";
@@ -1572,30 +1574,30 @@ function get_limit_conflicts($user_id,$date,$start_time,$end_time,$reschedule_re
 	if($num_user_reservations >= MAX_RESERVATIONS_PER_WEEK)
 	{
 		unset($error);
-		$error->message = "You have exceeded the maximum number of allowed reservations per week. Max: ".MAX_RESERVATIONS_PER_WEEK." reservations Sunday-Saturday."; 
+		$error->message = "You have exceeded the maximum number of allowed reservations per week. Max: ".MAX_RESERVATIONS_PER_WEEK." reservations Sunday-Saturday.";
 		while($res_user_reservations->fetchInto($res))
 			$error->data[] = $res;
 		$errors[] = $error;
 	}
-	
+
 	$credits = get_reservation_credits($user_id,$date);
-	
+
 	/* max reservation hours per week */
 	if(((MAX_RESERVATION_HOURS_PER_WEEK*60)-($credits->week_hours_remaining*60)) + ((strtotime($end_time) - strtotime($start_time))/60) > MAX_RESERVATION_HOURS_PER_WEEK*60)
 	{
 		unset($error);
-		$error->message = "You have exceeded the maximum number of allowed reservation hours per week. Max: ".MAX_RESERVATION_HOURS_PER_WEEK." reservation hours/week."; 
+		$error->message = "You have exceeded the maximum number of allowed reservation hours per week. Max: ".MAX_RESERVATION_HOURS_PER_WEEK." reservation hours/week.";
 		while($res_user_reservations->fetchInto($res))
 			$error->data[] = $res;
 		$errors[] = $error;
 	}
-	
-	
+
+
 	/* max reservations per day */
 	$hours = load_hours($db,$date);
 	$window_start = date('Y-m-d H:i:s',strtotime($hours->open_time));
 	$window_end = date('Y-m-d H:i:s',strtotime($hours->close_time));
-	
+
 	$select_user_reservations = "select * from reservations where user_id like '$user_id' and sched_start_time >= '$window_start' and sched_end_time < '$window_end' AND cancelled like '0' and active like '1'";
 	if($reschedule_reservation_id && $reschedule_reservation_id > 0)
 		$select_user_reservations .= " AND id not like '$reschedule_reservation_id'";
@@ -1605,17 +1607,17 @@ function get_limit_conflicts($user_id,$date,$start_time,$end_time,$reschedule_re
 	if($num_user_reservations >= MAX_RESERVATIONS_PER_DAY)
 	{
 		unset($error);
-		$error->message = "You have exceeded the maximum number of allowed reservations per day. Max: ".MAX_RESERVATIONS_PER_DAY." reservations/day."; 
+		$error->message = "You have exceeded the maximum number of allowed reservations per day. Max: ".MAX_RESERVATIONS_PER_DAY." reservations/day.";
 		while($res_user_reservations->fetchInto($res))
 			$error->data[] = $res;
 		$errors[] = $error;
 	}
-	
-	/* max reservation hours per day */	
+
+	/* max reservation hours per day */
 	if((((MAX_RESERVATION_HOURS_PER_DAY*60)-($credits->day_hours_remaining*60)) + ((strtotime($end_time) - strtotime($start_time))/60)) > MAX_RESERVATION_HOURS_PER_DAY*60)
 	{
 		unset($error);
-		$error->message = "You have exceeded the maximum number of allowed reservation hours per day. Max: ".MAX_RESERVATION_HOURS_PER_DAY." reservation hours/day."; 
+		$error->message = "You have exceeded the maximum number of allowed reservation hours per day. Max: ".MAX_RESERVATION_HOURS_PER_DAY." reservation hours/day.";
 		while($res_user_reservations->fetchInto($res))
 			$error->data[] = $res;
 		$errors[] = $error;
@@ -1629,18 +1631,18 @@ function get_ptype_conflicts($user_id)
 {
 	global $db;
 	$conflicts = array();
-	
+
 	$user = get_user_by_id($user_id);
-	
+
 	$allowed_ptypes = explode(",",ALLOWED_PTYPES);
-	
+
 	if(count(array_intersect(json_decode($user->ptype), $allowed_ptypes))==0)
 	{
 		$conflict = new stdClass();
-		$conflict->message = "Invalid patron type ($user->ptype). Reservations are not allowed for your patron type."; 
+		$conflict->message = "Invalid patron type ($user->ptype). Reservations are not allowed for your patron type.";
 		$conflicts[] = $conflict;
 	}
-	
+
 	return($conflicts);
 }
 
@@ -1648,13 +1650,13 @@ function get_expiration_conflicts($user_id)
 {
 	global $db;
 	$conflicts = array();
-	
+
 	$user = get_user_by_id($user_id);
-	
+
 	if(strtotime($user->expiration_date) < strtotime(date("Y-m-d")))
 	{
 		$conflict = new stdClass();
-		$conflict->message = "Account is expired."; 
+		$conflict->message = "Account is expired.";
 		$conflicts[] = $conflict;
 	}
 
@@ -1666,10 +1668,10 @@ function get_expiration_conflicts($user_id)
 function load_hours_for_date($date)
 {
 	global $db;
-	
+
 	$where = "WHERE date like '$date'";
 	$sort = "ORDER BY date asc";
-	
+
 	$select = "SELECT * FROM hours $where AND active LIKE '1' $sort";
 	//print("select: $select<br>\n");
 	$res = $db->query($select);
@@ -1691,7 +1693,7 @@ function print_checkin_form($reservation,$referrer="")
 		$date = "Today";
 	$start = date('g:ia',strtotime($reservation->sched_start_time));
 	$end = date('g:ia',strtotime($reservation->sched_end_time));
-	
+
 	if(isset($_SESSION['LibRooms']['Roles']))
 	{
 		if(in_array('Staff',$_SESSION['LibRooms']['Roles']))
@@ -1699,7 +1701,7 @@ function print_checkin_form($reservation,$referrer="")
 		if(in_array('Admin',$_SESSION['LibRooms']['Roles']))
 			$user_type = "admin";
 	}
-	
+
 	if(!strcmp($user_type,'admin') || !strcmp($user_type,'staff'))
 	{
 		print("<script>\n");
@@ -1709,7 +1711,7 @@ function print_checkin_form($reservation,$referrer="")
 		print("	if(r==true) document.location.href='lost_key.php?key_barcode='+key; \n");
 		print("}\n");
 		print("</script>\n");
-		
+
 		print("<div id='checkin_reservation_form'>\n");
 		print("<form action='checkin.php' style=''>\n");
 		print("<input type='hidden' name='reservation_id' value='$reservation->id'>\n");
@@ -1733,7 +1735,7 @@ function print_checkin_form($reservation,$referrer="")
 		print("</div>\n");
 
 	}
-	
+
 }
 
 function print_checkout_form($reservation,$referrer)
@@ -1745,27 +1747,27 @@ function print_checkout_form($reservation,$referrer)
 		$date = "Today";
 	$start = date('g:ia',strtotime($reservation->sched_start_time));
 	$end = date('g:ia',strtotime($reservation->sched_end_time));
-	
-	
+
+
 	print("<div id='checkout_reservation_form'>\n");
-	
+
 	// TODO: may not need referrer... just send to user's details page
 	//print("<input type='hidden' name='referrer' value='$referrer'>\n");
 	print("Upcoming Reservation:\n");
 	print("$date ($start-$end) in Room $room->room_number\n");
-	
+
 	if(in_array('Staff',$_SESSION['LibRooms']['Roles']) || in_array('Admin',$_SESSION['LibRooms']['Roles']))
 	{
 		print("<form action='checkout.php' style='margin-left:30px'>\n");
 		print("<input type='hidden' name='reservation_id' value='$reservation->id'>\n");
 		print("<input type='hidden' name='room_id' value='$room->id'>\n");
 		print("<input type='hidden' name='user_id' value='$reservation->user_id'>\n");
-	
+
 		// if reservation starts within one unit of precision, then show checkout form
 		if(strtotime($reservation->sched_start_time) < (strtotime('now') + (RES_PRECISION*60)))
 		{
 			print("<br>Key: <input id='checkout_key_barcode' type='text' size='15' name='checkout_key_barcode' value=''> <input type='submit' value='Check Out Key'><br>\n");
-			
+
 			// TODO: check to see if room is currently in use
 			/*
 			$reservations = load_reservations(array('room_id'=>$room->id,'status'=>"Checked Out",'active'=>"1"));
@@ -1782,8 +1784,8 @@ function print_checkout_form($reservation,$referrer)
 			print("<br>Reservation starts more than " . RES_PRECISION . " minutes from now.<br>Checkout not allowed.");
 		}
 		print("</form>\n");
-	}	
-	
+	}
+
 	print("<center><table><tr><td>\n");
 	print("<button onClick='document.location.href=\"reservation_details.php?reservation_id=$reservation->id\";'>Reservation Details</button>\n");
 	print("</td><td>\n");
@@ -1798,14 +1800,14 @@ function print_checkout_form($reservation,$referrer)
 	print("<input type='submit' value='Reschedule Reservation' type='submit'>\n");
 	print("</form>\n");
 	print("</td></tr></table></center>\n");
-	
+
 	print("</div>\n");
 }
 
 function print_fines_table($reservation)
 {
 	global $user_type;
-	
+
 	if(count($reservation->fines) > 0)
 	{
 		// check to see if total fines are greater than 0. if not, then don't show to non-admin users
@@ -1822,20 +1824,20 @@ function print_fines_table($reservation)
 			}
 			$total_fines += $net_fine_amount;
 		}
-		
+
 		if($total_fines > 0 || !strcmp($user_type,'admin'))
 		{
 			print("<div class='fines_table'><h2>Fines</h2>\n");
 			print("<table id='fines_table' width='100%' border><thead><tr><th>Date</th><th>Description</th><th>Amount</th></tr></thead>");
 			print("<tbody>\n");
-			
+
 			$total_fines = 0;
 			foreach($reservation->fines as $fine)
 			{
 				$date = date('m/d/Y g:ia',strtotime($fine->date_added));
-				
+
 				$net_fine_amount = $fine->amount;
-				
+
 				if(count($fine->reductions) > 0)
 				{
 					foreach($fine->reductions as $reduction)
@@ -1847,10 +1849,10 @@ function print_fines_table($reservation)
 				}
 				else
 					$reductions = "";
-					
+
 				$total_fines += $net_fine_amount;
 				$amount = format2dollars($fine->amount);
-				
+
 				print("<tr><td width='170'>$date</td><td>$fine->description</td><td width='100' align='right'>$amount ");
 				if(!strcmp($user_type,'admin') || !strcmp($user_type,'staff'))
 				{
@@ -1870,8 +1872,8 @@ function print_fines_table($reservation)
 function get_summary_report_date($start_date,$end_date)
 {
 	global $db;
-	
-		
+
+
 	// Total Reservations & Checkouts = All reservations regardless of status
 	// Total Returned Checkouts
 		// On-The-Fly Checkouts
@@ -1882,9 +1884,9 @@ function get_summary_report_date($start_date,$end_date)
 		// No shows
 		// Cancelled by Staff
 		// Cancelled by Patron
-	
+
 	// Total Overdue Checkins
-	
+
 	// Average Checkouts/Day by Room & Room Group
 	// Average Hourly Usage/Day by Room & Room Group
 }
@@ -1912,7 +1914,7 @@ function display_errors($errors,$extra_info="")
 function display_error($error,$extra_info="")
 {
 	print("<div class='error'>Error: $error</div>\n");
-	
+
 	@log_error($error,$extra_info);
 }
 
