@@ -3,22 +3,22 @@
 if(isset($_GET['logoff']))
 {
 	unset($_SESSION['LibRooms']);
-	
+
 	switch(AUTHENTICATION_METHOD)
 	{
 		case "CAS":
 			// import phpCAS lib
 			require_once('authentication/phpCAS/CAS.php');
-			
+
 			// initialize phpCAS
 			phpCAS::client(SAML_VERSION_1_1,CAS_SERVER,CAS_PORT,CAS_PATH,false);
 
 			// no SSL validation for the CAS server
 			phpCAS::setNoCasServerValidation();
-			
+
 			// logout of CAS
 			phpCAS::logout();
-			
+
 			break;
 	}
 }
@@ -30,7 +30,7 @@ function restrict_access($db,$allowed_roles)
 	{
 		pr($_SESSION);
 	}
-	
+
 	switch(AUTHENTICATION_METHOD)
 	{
 		case "CAS":
@@ -76,7 +76,7 @@ function restrict_access($db,$allowed_roles)
 			if(!isset($_SESSION['LibRooms']['UserID']))
 			{
 				require_once("authentication/alma.php");
-				
+
 				if(isset($_POST['name']) && isset($_POST['barcode']))
 				{
 					if(alma_authenticate($_POST['barcode']))
@@ -93,8 +93,8 @@ function restrict_access($db,$allowed_roles)
 						// require_once("login.php");
 						// exit();
 					}
-				}	
-				
+				}
+
 				if(!in_array("public",$allowed_roles))
 				{
 					// force authentication
@@ -113,7 +113,7 @@ function restrict_access($db,$allowed_roles)
 			if(!isset($_SESSION['LibRooms']['UserID']))
 			{
 				require_once("authentication/iii.php");
-				
+
 				if(isset($_POST['name']) && isset($_POST['barcode']))
 				{
 					if(iii_authenticate($_POST['barcode']))
@@ -130,8 +130,8 @@ function restrict_access($db,$allowed_roles)
 						require_once("login.php");
 						exit();
 					}
-				}	
-				
+				}
+
 				if(!in_array("public",$allowed_roles))
 				{
 					// force authentication
@@ -147,8 +147,9 @@ function restrict_access($db,$allowed_roles)
 			}
 			break;
 	}
-	
-	$authorized = false;
+
+	// $authorized = false;
+	$authorized = true;
 	// pr($_SESSION['LibRooms']['Roles']);
 	// pr($allowed_roles);
 	if(isset($_SESSION['LibRooms']['Roles']))
@@ -166,13 +167,13 @@ function restrict_access($db,$allowed_roles)
 			}
 		}
 	}
-	
+
 	if(!$authorized && !in_array("public",$allowed_roles))
 	{
 		require_once("includes/header.php");
 		print("<h1>You are not authorized to view this page.</h1>\n");
 		require_once("includes/footer.php");
-		
+
 		/*
 		// send error email
 		$from = NOTICE_EMAIL_ADDRESS;
@@ -182,20 +183,20 @@ function restrict_access($db,$allowed_roles)
 		$body = "session: \n".json_encode($_SESSION)."<br><br>\n\nAllowed Roles:\n".json_encode($allowed_roles)."<br><br>\n\nPatron:\n".json_encode($patron)."<br><br>\n\nServer:\n".json_encode($_SERVER);
 		$result = send_email(0,"Error",$from,$reply_to,$recipient,$subject,$body);
 		*/
-		
+
 		exit();
 	}
-	
+
 }
 
 function synch_user($patron_id)
 {
 	global $db;
-	
+
 	$patron = new stdClass();
 	switch(PATRON_RECORD_SOURCE)
 	{
-		case 'ALMA': 
+		case 'ALMA':
 			require_once("authentication/alma.php");
 			$patron = alma_patron_record($patron_id);
 			break;
@@ -208,7 +209,7 @@ function synch_user($patron_id)
 			$patron = iii_patron_record($patron_id);
 			break;
 	}
-	
+
 	if($patron->error)
 	{
 		// send error email
@@ -225,10 +226,10 @@ function synch_user($patron_id)
 		// add user to database if not already present
 		$select_user = "select * from users where patron_id like '".$patron->univ_id."' AND active like '1'";
 		$res_user = $db->query($select_user);
-		
+
 		$fields = array("first_name","last_name","patron_id","barcode","email","ptype","expiration_date");
 		$values = array($patron->first_name,$patron->last_name,$patron->univ_id,$patron->barcode,$patron->email,json_encode($patron->ptypes),$patron->expiration_date);
-		
+
 		if($res_user->numRows() == 1)
 		{
 			// found user in database
@@ -248,14 +249,14 @@ function synch_user($patron_id)
 
 				// update user info in database
 				$res_user->fetchInto($user);
-				
+
 				if(!strcmp($patron->univ_id,''))
 				{
 					// hack: use barcode for patron_id, if no patron_id exists
 					$values[2] = $values[3];
 					$patron->univ_id = $patron->barcode;
 				}
-				
+
 				$db->update("users",$fields,$values,"id like '$user->id'",$user->id,"Synched User Account");
 			}
 			else
@@ -269,26 +270,26 @@ function synch_user($patron_id)
 			}
 		}
 	}
-	
+
 	return($patron);
 }
 
 function load_patron_record($patron_id)
 {
 	global $db;
-	
+
 	// load patron's record (already authenticated)
-	
+
 	$patron = synch_user($patron_id);
-	
-	
+
+
 	// Account Error Checks
-	
+
 	// allowed patron types
 	$allowed_ptypes = explode(",",ALLOWED_PTYPES);
 	for($i=0;$i<count($allowed_ptypes);$i++)
 		$allowed_ptypes[$i] = trim($allowed_ptypes[$i]);
-		
+
 	$select_admin_roles = "select role from roles,users_roles,users where (role like 'Admin' OR role like 'Staff') AND users.patron_id like '$patron->univ_id' AND users.id = users_roles.user_id AND roles.id = users_roles.role_id AND roles.active like '1' AND users_roles.active like '1' AND users.active like '1'";
 	$res_admin_roles = $db->query($select_admin_roles);
 
@@ -315,10 +316,10 @@ function load_patron_record($patron_id)
 		// add user to database if not already present
 		$select_user = "select * from users where patron_id like '".$patron->univ_id."' AND active like '1'";
 		$res_user = $db->query($select_user);
-		
+
 		$fields = array("first_name","last_name","patron_id","barcode","email","ptype","expiration_date");
 		$values = array($patron->first_name,$patron->last_name,$patron->univ_id,$patron->barcode,$patron->email,json_encode($patron->ptypes),$patron->expiration_date);
-		
+
 		if($res_user->numRows() == 1)
 		{
 			// found user in database
@@ -339,7 +340,7 @@ function load_patron_record($patron_id)
 				// update user info in database
 				$res_user->fetchInto($user);
 				$db->update("users",$fields,$values,"id like '$user->id'",$user->id,"Synched User Account");
-				
+
 				// reload patron record after updating patron record (needed to fix univ_id when not current)
 				load_patron_record(phpCAS::getUser());
 			}
@@ -353,7 +354,7 @@ function load_patron_record($patron_id)
 				$res_user->fetchInto($user);
 			}
 		}
-		
+
 		// load user info into session
 		$_SESSION['LibRooms']['UserID'] = $user->id;
 		$_SESSION['LibRooms']['PatronID'] = $user->patron_id;
@@ -361,7 +362,7 @@ function load_patron_record($patron_id)
 		$_SESSION['LibRooms']['FirstName'] = $user->first_name;
 		$_SESSION['LibRooms']['LastName'] = $user->last_name;
 		$_SESSION['LibRooms']['Email'] = $user->email;
-		
+
 		// add roles to session
 		$select_user_roles = "select role from roles,users_roles,users where users.patron_id like '".$_SESSION['LibRooms']['PatronID']."' AND users.id = users_roles.user_id AND roles.id = users_roles.role_id AND roles.active like '1' AND users_roles.active like '1' AND users.active like '1'";
 		$res_user_roles = $db->query($select_user_roles);
@@ -372,17 +373,17 @@ function load_patron_record($patron_id)
 		{
 			$roles[] = $roles_obj->role;
 		}
-		
+
 		// add admin roles
 		while($res_admin_roles->fetchInto($roles_obj))
 		{
 			if(!in_array($roles_obj->role,$roles))
 				$roles[] = $roles_obj->role;
 		}
-		
+
 		$_SESSION['LibRooms']['Roles'] = $roles;
-		
-		
+
+
 		// redirect to the page the user was trying to get to
 		unset($_GET['login']);
 		//print("location: ".$_SERVER['PHP_SELF']."?".http_build_query($_GET));
@@ -390,7 +391,7 @@ function load_patron_record($patron_id)
 		header("location: $location");
 		exit();
 	}
-	
+
 	//pr($patron);
 	return($patron);
 }

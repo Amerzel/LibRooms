@@ -44,10 +44,10 @@ table {border-collapse: inherit;}
 
 $page = str_replace(WEB_ROOT,"",$_SERVER['PHP_SELF']);
 
-if(is_array($_SESSION['LibRooms']['Roles']))
-{
-	if(in_array('Staff',$_SESSION['LibRooms']['Roles']) || in_array('Admin',$_SESSION['LibRooms']['Roles']))
-	{
+// if(is_array($_SESSION['LibRooms']['Roles']))
+// {
+// 	if(in_array('Staff',$_SESSION['LibRooms']['Roles']) || in_array('Admin',$_SESSION['LibRooms']['Roles']))
+// 	{
 		print("<center><form action='search.php'>\n");
 		print("<table id='admin_toolbar' style='border:1px solid #444;'><tr>\n");
 
@@ -64,8 +64,8 @@ if(is_array($_SESSION['LibRooms']['Roles']))
 		//print("<td align='center'><a href='#'>Fines</a></td>\n");
 		print("</tr></table></form>\n");
 		print("</center>\n");
-	}
-}
+// 	}
+// }
 
 
 if(!strcmp($page,'reservation_calendar.php'))
